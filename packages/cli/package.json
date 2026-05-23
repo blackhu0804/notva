@@ -1,0 +1,15 @@
+{
+  "name": "notva",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "notva": "./dist/main.js"
+  },
+  "dependencies": {
+    "@notva/core": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run src"
+  }
+}
