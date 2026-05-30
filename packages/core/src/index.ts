@@ -7,3 +7,4 @@ export * from "./reindex.js";
 export * from "./review.js";
 export * from "./state.js";
 export * from "./types.js";
+export * from "./wiki.js";
