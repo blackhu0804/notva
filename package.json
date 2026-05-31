@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -b packages/core packages/cli",
+    "build": "tsc -b packages/core packages/server packages/cli",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc -b packages/core packages/cli",
+    "typecheck": "tsc -b packages/core packages/server packages/cli",
     "notva": "tsx packages/cli/src/main.ts"
   },
   "devDependencies": {

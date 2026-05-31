@@ -12,7 +12,8 @@
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "@notva/core": ["packages/core/src/index.ts"]
+      "@notva/core": ["packages/core/src/index.ts"],
+      "@notva/server": ["packages/server/src/index.ts"]
     }
   }
 }

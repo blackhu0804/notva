@@ -29,6 +29,14 @@ importers:
 
   packages/core: {}
 
+  packages/server:
+    dependencies:
+      '@notva/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/web: {}
+
 packages:
 
   '@esbuild/aix-ppc64@0.27.7':
