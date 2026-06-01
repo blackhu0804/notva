@@ -26,6 +26,9 @@ importers:
       '@notva/core':
         specifier: workspace:*
         version: link:../core
+      '@notva/server':
+        specifier: workspace:*
+        version: link:../server
 
   packages/core: {}
 

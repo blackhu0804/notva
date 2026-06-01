@@ -9,6 +9,7 @@ import {
   queryVault,
   reindexVault
 } from "@notva/core";
+import { listenNotvaServer } from "@notva/server";
 
 interface ParsedArgs {
   positional: string[];
@@ -89,6 +90,19 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     return;
   }
 
+  if (command === "serve") {
+    const portValue = Number(args.flags.get("port") ?? 4321);
+    if (!Number.isInteger(portValue) || portValue < 0 || portValue > 65535) {
+      throw new Error("Port must be an integer between 0 and 65535.");
+    }
+    const running = await listenNotvaServer({ port: portValue });
+    console.log(`Notva web workbench: ${running.url} (vault: ${root})`);
+    if (process.env.VITEST) {
+      await running.close();
+    }
+    return;
+  }
+
   throw new Error(`Unknown command: ${command}`);
 }
 
@@ -123,7 +137,8 @@ Commands:
   review [--vault path] [--apply all|proposal-id]
   query "question" [--vault path]
   lint [--vault path]
-  reindex [--vault path]`);
+  reindex [--vault path]
+  serve [--vault path] [--port 4321]`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

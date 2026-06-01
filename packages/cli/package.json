@@ -6,7 +6,8 @@
     "notva": "./dist/main.js"
   },
   "dependencies": {
-    "@notva/core": "workspace:*"
+    "@notva/core": "workspace:*",
+    "@notva/server": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

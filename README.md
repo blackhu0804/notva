@@ -17,6 +17,7 @@ notva review --apply all
 notva query "question"
 notva lint
 notva reindex
+notva serve
 ```
 
 ## Vault Layout
@@ -41,3 +42,11 @@ pnpm test
 pnpm typecheck
 pnpm build
 ```
+
+## Local Web Workbench
+
+```bash
+pnpm notva serve --vault /path/to/vault --port 4321
+```
+
+Then open the printed local URL.

@@ -49,4 +49,12 @@ describe("notva CLI", () => {
     expect((await capture(["query", "durable markdown", "--vault", root])).stdout[0]).toContain("Local Knowledge Vault");
     expect((await capture(["lint", "--vault", root])).stdout[0]).toContain("No lint issues");
   });
+
+  test("starts the local web workbench", async () => {
+    const root = await tempRoot();
+    const output = await capture(["serve", "--vault", root, "--port", "0"]);
+
+    expect(output.stdout[0]).toContain("Notva web workbench");
+    expect(output.stdout[0]).toContain("http://127.0.0.1:");
+  });
 });
