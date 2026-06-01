@@ -4,10 +4,78 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Notva</title>
+    <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
-    <main>
-      <h1>Notva</h1>
+    <main class="workspace">
+      <header class="topbar">
+        <div class="brand">
+          <span class="mark">N</span>
+          <div>
+            <h1>Notva</h1>
+            <p>Local knowledge vault</p>
+          </div>
+        </div>
+        <form class="vault-bar" id="vault-form">
+          <label for="vault">Vault</label>
+          <input id="vault" name="vault" type="text" autocomplete="off" placeholder="/path/to/vault">
+          <button type="submit">Init</button>
+        </form>
+      </header>
+
+      <section class="status-line" id="status">Ready</section>
+
+      <section class="grid">
+        <form class="panel source-panel" id="ingest-form">
+          <div class="panel-head">
+            <h2>Source</h2>
+            <select id="source-kind" aria-label="Source kind">
+              <option value="text">Text</option>
+              <option value="file">File</option>
+              <option value="url">URL</option>
+            </select>
+          </div>
+          <textarea id="source-target" spellcheck="false" placeholder="# New Note&#10;&#10;Paste text, a file path, or a URL."></textarea>
+          <button type="submit">Ingest</button>
+        </form>
+
+        <section class="panel review-panel">
+          <div class="panel-head">
+            <h2>Review</h2>
+            <button id="apply-all" type="button">Apply All</button>
+          </div>
+          <div class="list" id="proposal-list"></div>
+        </section>
+
+        <form class="panel query-panel" id="query-form">
+          <div class="panel-head">
+            <h2>Query</h2>
+          </div>
+          <input id="question" type="text" autocomplete="off" placeholder="Ask from the vault">
+          <button type="submit">Search</button>
+          <pre id="answer"></pre>
+        </form>
+
+        <section class="panel pages-panel">
+          <div class="panel-head">
+            <h2>Wiki</h2>
+            <button id="refresh-pages" type="button">Refresh</button>
+          </div>
+          <div class="split">
+            <nav class="list" id="page-list"></nav>
+            <pre id="page-body"></pre>
+          </div>
+        </section>
+
+        <section class="panel lint-panel">
+          <div class="panel-head">
+            <h2>Lint</h2>
+            <button id="run-lint" type="button">Run</button>
+          </div>
+          <div class="list" id="lint-list"></div>
+        </section>
+      </section>
     </main>
+    <script src="/app.js" type="module"></script>
   </body>
 </html>

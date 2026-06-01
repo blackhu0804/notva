@@ -69,6 +69,12 @@ describe("Notva HTTP server", () => {
 
       const home = await fetch(running.url);
       expect(await home.text()).toContain("Notva");
+
+      const styles = await fetch(`${running.url}/styles.css`);
+      expect(await styles.text()).toContain(".workspace");
+
+      const script = await fetch(`${running.url}/app.js`);
+      expect(await script.text()).toContain("fetchJson");
     } finally {
       await running.close();
     }
