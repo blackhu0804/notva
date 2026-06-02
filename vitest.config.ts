@@ -7,7 +7,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@notva/core": fileURLToPath(new URL("./packages/core/src/index.ts", import.meta.url))
+      "@notva/core": fileURLToPath(new URL("./packages/core/src/index.ts", import.meta.url)),
+      "@notva/server": fileURLToPath(new URL("./packages/server/src/index.ts", import.meta.url))
     }
   }
 });
