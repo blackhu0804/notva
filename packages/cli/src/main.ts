@@ -95,7 +95,7 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     if (!Number.isInteger(portValue) || portValue < 0 || portValue > 65535) {
       throw new Error("Port must be an integer between 0 and 65535.");
     }
-    const running = await listenNotvaServer({ port: portValue });
+    const running = await listenNotvaServer({ port: portValue, defaultVault: root });
     console.log(`Notva web workbench: ${running.url} (vault: ${root})`);
     if (process.env.VITEST) {
       await running.close();

@@ -165,6 +165,16 @@ els.queryForm.addEventListener("submit", withErrors(queryVault));
 els.refreshPages.addEventListener("click", withErrors(loadPages));
 els.runLint.addEventListener("click", withErrors(runLint));
 
-if (state.vault) {
-  refreshAll().catch((error) => setStatus(error instanceof Error ? error.message : String(error)));
+bootstrap().catch((error) => setStatus(error instanceof Error ? error.message : String(error)));
+
+async function bootstrap() {
+  const health = await fetchJson("/api/health");
+  if (!state.vault && health.defaultVault) {
+    state.vault = health.defaultVault;
+    els.vault.value = health.defaultVault;
+    localStorage.setItem("notva:vault", health.defaultVault);
+  }
+  if (state.vault) {
+    await refreshAll();
+  }
 }

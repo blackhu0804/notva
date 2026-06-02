@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 
 export interface CreateNotvaServerOptions {
   staticRoot?: string;
+  defaultVault?: string;
 }
 
 export interface ListenNotvaServerOptions extends CreateNotvaServerOptions {
@@ -34,7 +35,7 @@ export function createNotvaServer(options: CreateNotvaServerOptions = {}): Serve
   const staticRoot = options.staticRoot ?? DEFAULT_STATIC_ROOT;
   return createServer(async (request, response) => {
     try {
-      await routeRequest(request, response, staticRoot);
+      await routeRequest(request, response, { staticRoot, defaultVault: options.defaultVault });
     } catch (error) {
       sendJson(response, 500, {
         error: error instanceof Error ? error.message : String(error)
@@ -62,12 +63,16 @@ export async function listenNotvaServer(options: ListenNotvaServerOptions): Prom
   };
 }
 
-async function routeRequest(request: IncomingMessage, response: ServerResponse, staticRoot: string): Promise<void> {
+async function routeRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: { staticRoot: string; defaultVault?: string }
+): Promise<void> {
   const url = new URL(request.url ?? "/", "http://notva.local");
   const method = request.method ?? "GET";
 
   if (method === "GET" && url.pathname === "/api/health") {
-    sendJson(response, 200, { ok: true, name: "Notva" });
+    sendJson(response, 200, { ok: true, name: "Notva", defaultVault: options.defaultVault ?? "" });
     return;
   }
 
@@ -143,7 +148,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse, 
   }
 
   if (method === "GET") {
-    await serveStatic(response, staticRoot, url.pathname);
+    await serveStatic(response, options.staticRoot, url.pathname);
     return;
   }
 

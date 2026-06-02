@@ -27,10 +27,10 @@ async function json<T>(url: string, init?: RequestInit): Promise<T> {
 describe("Notva HTTP server", () => {
   test("serves local APIs and the web workbench", async () => {
     const vault = await tempRoot();
-    const running = await listenNotvaServer({ port: 0 });
+    const running = await listenNotvaServer({ port: 0, defaultVault: vault });
     try {
-      const health = await json<{ ok: boolean; name: string }>(`${running.url}/api/health`);
-      expect(health).toEqual({ ok: true, name: "Notva" });
+      const health = await json<{ ok: boolean; name: string; defaultVault: string }>(`${running.url}/api/health`);
+      expect(health).toEqual({ ok: true, name: "Notva", defaultVault: vault });
 
       await json(`${running.url}/api/init`, {
         method: "POST",
