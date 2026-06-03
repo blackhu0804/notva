@@ -70,6 +70,12 @@ export interface QueryResult {
   hits: QueryHit[];
 }
 
+export interface ActResult {
+  task: string;
+  output: string;
+  evidence: QueryHit[];
+}
+
 export interface LintIssue {
   code: string;
   message: string;

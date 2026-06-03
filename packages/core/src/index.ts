@@ -1,3 +1,4 @@
+export * from "./act.js";
 export * from "./ingest.js";
 export * from "./init.js";
 export * from "./lint.js";
