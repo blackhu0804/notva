@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {
+  actVault,
   applyProposal,
   ingestSource,
   initVault,
@@ -74,6 +75,14 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
     return;
   }
 
+  if (command === "act") {
+    const task = args.positional.join(" ");
+    if (!task) throw new Error("Usage: notva act \"task\" [--vault path]");
+    const result = await actVault({ root, task });
+    console.log(result.output);
+    return;
+  }
+
   if (command === "lint") {
     const issues = await lintVault({ root });
     if (issues.length === 0) {
@@ -136,6 +145,7 @@ Commands:
   ingest --text "content" [--vault path]
   review [--vault path] [--apply all|proposal-id]
   query "question" [--vault path]
+  act "task" [--vault path]
   lint [--vault path]
   reindex [--vault path]
   serve [--vault path] [--port 4321]`);

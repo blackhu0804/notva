@@ -47,6 +47,7 @@ describe("notva CLI", () => {
     expect(wikiPage).toContain("Notva keeps durable Markdown wiki pages");
 
     expect((await capture(["query", "durable markdown", "--vault", root])).stdout[0]).toContain("Local Knowledge Vault");
+    expect((await capture(["act", "Draft next step for durable markdown", "--vault", root])).stdout[0]).toContain("Evidence");
     expect((await capture(["lint", "--vault", root])).stdout[0]).toContain("No lint issues");
   });
 
