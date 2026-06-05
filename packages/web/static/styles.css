@@ -184,12 +184,14 @@ pre {
   gap: 12px;
 }
 
-.query-panel {
+.query-panel,
+.act-panel {
   display: grid;
   gap: 10px;
 }
 
 .query-panel pre,
+.act-panel pre,
 #page-body {
   min-height: 220px;
   max-height: 460px;

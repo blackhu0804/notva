@@ -61,6 +61,12 @@ describe("Notva HTTP server", () => {
       });
       expect(query.answer).toContain("Server Note");
 
+      const act = await json<{ output: string }>(`${running.url}/api/act`, {
+        method: "POST",
+        body: JSON.stringify({ vault, task: "Draft a next step for the local web workbench" })
+      });
+      expect(act.output).toContain("Evidence");
+
       const pages = await json<{ pages: Array<{ title: string }> }>(`${running.url}/api/pages?vault=${encodeURIComponent(vault)}`);
       expect(pages.pages[0].title).toBe("Server Note");
 

@@ -15,6 +15,9 @@ const els = {
   queryForm: document.querySelector("#query-form"),
   question: document.querySelector("#question"),
   answer: document.querySelector("#answer"),
+  actForm: document.querySelector("#act-form"),
+  task: document.querySelector("#task"),
+  actionOutput: document.querySelector("#action-output"),
   pageList: document.querySelector("#page-list"),
   pageBody: document.querySelector("#page-body"),
   refreshPages: document.querySelector("#refresh-pages"),
@@ -115,6 +118,15 @@ async function queryVault() {
   els.answer.textContent = `${data.answer}\n${hits}`.trim();
 }
 
+async function actVault() {
+  const task = els.task.value.trim();
+  const data = await fetchJson("/api/act", {
+    method: "POST",
+    body: JSON.stringify({ vault: vault(), task })
+  });
+  els.actionOutput.textContent = data.output;
+}
+
 async function loadPages() {
   const data = await fetchJson(`/api/pages?vault=${encodeURIComponent(vault())}`);
   renderList(els.pageList, data.pages, (page) => {
@@ -162,6 +174,7 @@ els.vaultForm.addEventListener("submit", withErrors(initVault));
 els.ingestForm.addEventListener("submit", withErrors(ingestSource));
 els.applyAll.addEventListener("click", withErrors(applyAll));
 els.queryForm.addEventListener("submit", withErrors(queryVault));
+els.actForm.addEventListener("submit", withErrors(actVault));
 els.refreshPages.addEventListener("click", withErrors(loadPages));
 els.runLint.addEventListener("click", withErrors(runLint));
 

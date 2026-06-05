@@ -1,4 +1,5 @@
 import {
+  actVault,
   applyProposal,
   ingestSource,
   initVault,
@@ -121,6 +122,16 @@ async function routeRequest(
     const result = await queryVault({
       root: requireVault(body.vault),
       question: requireText(body.question, "question")
+    });
+    sendJson(response, 200, result);
+    return;
+  }
+
+  if (method === "POST" && url.pathname === "/api/act") {
+    const body = await readJson<{ vault: string; task: string }>(request);
+    const result = await actVault({
+      root: requireVault(body.vault),
+      task: requireText(body.task, "task")
     });
     sendJson(response, 200, result);
     return;
