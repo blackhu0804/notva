@@ -15,6 +15,7 @@ notva ingest --text "content"
 notva review
 notva review --apply all
 notva query "question"
+notva act "task"
 notva lint
 notva reindex
 notva serve
