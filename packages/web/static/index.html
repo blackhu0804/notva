@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Notva</title>
+    <title>Notva 本地知识库工作台</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
@@ -13,62 +13,62 @@
           <span class="mark">N</span>
           <div>
             <h1>Notva</h1>
-            <p>Local knowledge vault</p>
+            <p>本地知识库工作台</p>
           </div>
         </div>
         <form class="vault-bar" id="vault-form">
-          <label for="vault">Vault</label>
+          <label for="vault">知识库路径</label>
           <input id="vault" name="vault" type="text" autocomplete="off" placeholder="/path/to/vault">
-          <button type="submit">Init</button>
+          <button type="submit">初始化</button>
         </form>
       </header>
 
-      <section class="status-line" id="status">Ready</section>
+      <section class="status-line" id="status">就绪</section>
 
       <section class="grid">
         <form class="panel source-panel" id="ingest-form">
           <div class="panel-head">
-            <h2>Source</h2>
-            <select id="source-kind" aria-label="Source kind">
-              <option value="text">Text</option>
-              <option value="file">File</option>
+            <h2>资料</h2>
+            <select id="source-kind" aria-label="资料类型">
+              <option value="text">文本</option>
+              <option value="file">文件</option>
               <option value="url">URL</option>
             </select>
           </div>
-          <textarea id="source-target" spellcheck="false" placeholder="# New Note&#10;&#10;Paste text, a file path, or a URL."></textarea>
-          <button type="submit">Ingest</button>
+          <textarea id="source-target" spellcheck="false" placeholder="# 新笔记&#10;&#10;粘贴文本、文件路径或 URL。"></textarea>
+          <button type="submit">摄取</button>
         </form>
 
         <section class="panel review-panel">
           <div class="panel-head">
-            <h2>Review</h2>
-            <button id="apply-all" type="button">Apply All</button>
+            <h2>审核</h2>
+            <button id="apply-all" type="button">全部应用</button>
           </div>
           <div class="list" id="proposal-list"></div>
         </section>
 
         <form class="panel query-panel" id="query-form">
           <div class="panel-head">
-            <h2>Query</h2>
+            <h2>查询</h2>
           </div>
-          <input id="question" type="text" autocomplete="off" placeholder="Ask from the vault">
-          <button type="submit">Search</button>
+          <input id="question" type="text" autocomplete="off" placeholder="从知识库提问">
+          <button type="submit">搜索</button>
           <pre id="answer"></pre>
         </form>
 
         <form class="panel act-panel" id="act-form">
           <div class="panel-head">
-            <h2>Act</h2>
+            <h2>执行</h2>
           </div>
-          <input id="task" type="text" autocomplete="off" placeholder="Task grounded in the vault">
-          <button type="submit">Run</button>
+          <input id="task" type="text" autocomplete="off" placeholder="基于知识库执行任务">
+          <button type="submit">运行</button>
           <pre id="action-output"></pre>
         </form>
 
         <section class="panel pages-panel">
           <div class="panel-head">
-            <h2>Wiki</h2>
-            <button id="refresh-pages" type="button">Refresh</button>
+            <h2>Wiki 页面</h2>
+            <button id="refresh-pages" type="button">刷新</button>
           </div>
           <div class="split">
             <nav class="list" id="page-list"></nav>
@@ -78,8 +78,8 @@
 
         <section class="panel lint-panel">
           <div class="panel-head">
-            <h2>Lint</h2>
-            <button id="run-lint" type="button">Run</button>
+            <h2>健康检查</h2>
+            <button id="run-lint" type="button">运行</button>
           </div>
           <div class="list" id="lint-list"></div>
         </section>

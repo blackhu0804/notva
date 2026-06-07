@@ -74,13 +74,17 @@ describe("Notva HTTP server", () => {
       expect(lint.issues).toHaveLength(0);
 
       const home = await fetch(running.url);
-      expect(await home.text()).toContain("Notva");
+      const homeText = await home.text();
+      expect(homeText).toContain("Notva");
+      expect(homeText).toContain("本地知识库工作台");
 
       const styles = await fetch(`${running.url}/styles.css`);
       expect(await styles.text()).toContain(".workspace");
 
       const script = await fetch(`${running.url}/app.js`);
-      expect(await script.text()).toContain("fetchJson");
+      const scriptText = await script.text();
+      expect(scriptText).toContain("fetchJson");
+      expect(scriptText).toContain("知识库路径不能为空。");
     } finally {
       await running.close();
     }

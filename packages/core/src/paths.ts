@@ -42,9 +42,9 @@ export function shortId(input: string | Buffer): string {
 
 export function slugify(input: string): string {
   const slug = input
-    .normalize("NFKD")
+    .normalize("NFKC")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
   return slug || "untitled";

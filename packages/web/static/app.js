@@ -44,7 +44,7 @@ async function fetchJson(path, options = {}) {
 
 function vault() {
   const value = els.vault.value.trim();
-  if (!value) throw new Error("Vault path is required.");
+  if (!value) throw new Error("知识库路径不能为空。");
   state.vault = value;
   localStorage.setItem("notva:vault", value);
   return value;
@@ -73,7 +73,7 @@ async function initVault() {
     method: "POST",
     body: JSON.stringify({ vault: vault() })
   });
-  setStatus(`Initialized ${state.vault}`);
+  setStatus(`已初始化 ${state.vault}`);
   await refreshAll();
 }
 
@@ -85,7 +85,7 @@ async function ingestSource() {
     body: JSON.stringify({ vault: vault(), kind, target })
   });
   els.sourceTarget.value = "";
-  setStatus("Created a pending proposal.");
+  setStatus("已创建待审核 proposal。");
   await loadProposals();
 }
 
@@ -96,7 +96,7 @@ async function loadProposals() {
     item.className = "item";
     item.innerHTML = `<strong>${proposal.id}</strong><small>${proposal.summary}</small>`;
     return item;
-  }, "No pending proposals.");
+  }, "没有待审核 proposal。");
 }
 
 async function applyAll() {
@@ -104,7 +104,7 @@ async function applyAll() {
     method: "POST",
     body: JSON.stringify({ vault: vault(), proposalId: "all" })
   });
-  setStatus(`Applied ${data.applied} proposal(s).`);
+  setStatus(`已应用 ${data.applied} 个 proposal。`);
   await refreshAll();
 }
 
@@ -136,7 +136,7 @@ async function loadPages() {
     button.textContent = page.title;
     button.addEventListener("click", () => selectPage(page.path));
     return button;
-  }, "No wiki pages.");
+  }, "还没有 Wiki 页面。");
 }
 
 async function selectPage(path) {
@@ -152,7 +152,7 @@ async function runLint() {
     item.className = "item issue";
     item.innerHTML = `<strong>${issue.code}</strong><small>${issue.message}</small>`;
     return item;
-  }, "No lint issues.");
+  }, "没有健康检查问题。");
 }
 
 async function refreshAll() {

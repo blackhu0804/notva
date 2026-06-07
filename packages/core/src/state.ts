@@ -138,13 +138,25 @@ export class NotvaState {
 
   searchPages(query: string, limit = 5): QueryHit[] {
     const match = toFtsQuery(query);
-    if (!match) return [];
-    return this.db.prepare(`
-      SELECT path, title, snippet(page_fts, 2, '[', ']', '...', 16) AS snippet
-      FROM page_fts
-      WHERE page_fts MATCH ?
-      LIMIT ?
-    `).all(match, limit) as unknown as QueryHit[];
+    const hits: QueryHit[] = [];
+    if (match) {
+      try {
+        hits.push(...this.db.prepare(`
+          SELECT path, title, snippet(page_fts, 2, '[', ']', '...', 16) AS snippet
+          FROM page_fts
+          WHERE page_fts MATCH ?
+          LIMIT ?
+        `).all(match, limit) as unknown as QueryHit[]);
+      } catch {
+        // FTS5 tokenization is not enough for all languages; fallback search below keeps Unicode content searchable.
+      }
+    }
+
+    if (hits.length >= limit) return hits.slice(0, limit);
+
+    const seen = new Set(hits.map((hit) => hit.path));
+    const fallback = fallbackSearch(query, this.listPages(), limit - hits.length, seen);
+    return [...hits, ...fallback];
   }
 }
 
@@ -182,11 +194,61 @@ function mapPage(row: PageRow): PageRecord {
 }
 
 function toFtsQuery(query: string): string {
-  return query
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .filter((token) => token.length > 1)
+  return unicodeTokens(query)
     .slice(0, 8)
     .map((token) => `${token}*`)
     .join(" OR ");
+}
+
+function fallbackSearch(query: string, pages: PageRecord[], limit: number, seen: Set<string>): QueryHit[] {
+  const terms = searchTerms(query);
+  if (terms.length === 0) return [];
+
+  return pages
+    .filter((page) => !seen.has(page.path))
+    .map((page) => {
+      const haystack = `${page.title}\n${page.path}\n${page.body}`.toLocaleLowerCase();
+      const matchedTerms = terms.filter((term) => haystack.includes(term));
+      return { page, matchedTerms };
+    })
+    .filter((candidate) => candidate.matchedTerms.length > 0)
+    .sort((a, b) => b.matchedTerms.length - a.matchedTerms.length)
+    .slice(0, limit)
+    .map(({ page, matchedTerms }) => ({
+      path: page.path,
+      title: page.title,
+      snippet: snippetFor(page.body, matchedTerms[0])
+    }));
+}
+
+function searchTerms(query: string): string[] {
+  const tokens = unicodeTokens(query);
+  const cjkGrams = [...query.matchAll(/[\p{Script=Han}]{2,}/gu)]
+    .flatMap((match) => bigrams(match[0].toLocaleLowerCase()));
+  return [...new Set([...tokens, ...cjkGrams])].filter((term) => term.length > 1);
+}
+
+function unicodeTokens(query: string): string[] {
+  return query
+    .toLocaleLowerCase()
+    .match(/[\p{Letter}\p{Number}]+/gu)
+    ?.filter((token) => token.length > 1) ?? [];
+}
+
+function bigrams(input: string): string[] {
+  const chars = [...input];
+  const grams: string[] = [];
+  for (let index = 0; index < chars.length - 1; index += 1) {
+    grams.push(`${chars[index]}${chars[index + 1]}`);
+  }
+  return grams;
+}
+
+function snippetFor(body: string, term: string): string {
+  const lowerBody = body.toLocaleLowerCase();
+  const index = lowerBody.indexOf(term);
+  if (index === -1) return body.replace(/\s+/g, " ").slice(0, 160);
+  const start = Math.max(0, index - 48);
+  const end = Math.min(body.length, index + term.length + 96);
+  return `${start > 0 ? "..." : ""}${body.slice(start, end).replace(/\s+/g, " ")}${end < body.length ? "..." : ""}`;
 }
