@@ -81,14 +81,14 @@ pre {
 }
 
 .workspace {
-  width: min(1500px, calc(100vw - 32px));
+  width: min(1440px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 22px 0 36px;
+  padding: 20px 0 32px;
 }
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(220px, 0.55fr) minmax(420px, 1.45fr);
+  grid-template-columns: minmax(220px, max-content) minmax(0, 1fr);
   gap: 18px;
   align-items: center;
 }
@@ -127,14 +127,16 @@ pre {
 
 .vault-bar {
   display: grid;
-  grid-template-columns: auto minmax(180px, 1fr) auto;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
   gap: 10px;
   align-items: center;
+  min-width: 0;
 }
 
 .vault-bar label {
   color: var(--muted);
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .status-line {
@@ -148,12 +150,12 @@ pre {
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(300px, 0.9fr) minmax(300px, 0.82fr) minmax(360px, 1.12fr);
+  grid-template-columns: minmax(260px, 0.78fr) minmax(330px, 1fr) minmax(420px, 1.22fr);
   grid-template-areas:
-    "source review query"
-    "source lint act"
-    "pages pages pages";
-  gap: 16px;
+    "source query pages"
+    "review act pages"
+    "lint act pages";
+  gap: 14px;
   align-items: start;
 }
 
@@ -167,21 +169,36 @@ pre {
 
 .panel-head {
   display: flex;
-  min-height: 42px;
+  min-height: 38px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
 }
 
-.panel h2 {
+.panel h2,
+.panel-head h2 {
+  flex: 0 0 auto;
   font-size: 18px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.panel-head select {
+  width: auto;
+  min-width: 140px;
+  max-width: 220px;
+  flex: 1 1 auto;
 }
 
 .source-panel {
   grid-area: source;
   display: grid;
   gap: 12px;
+}
+
+.source-panel textarea {
+  min-height: 180px;
 }
 
 .review-panel {
@@ -213,12 +230,20 @@ pre {
 .query-panel pre,
 .act-panel pre,
 #page-body {
-  min-height: 220px;
+  min-height: 150px;
   max-height: 460px;
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 12px;
   background: var(--field);
+}
+
+.act-panel pre {
+  min-height: 230px;
+}
+
+.pages-panel {
+  min-height: 100%;
 }
 
 .list {
@@ -244,8 +269,17 @@ pre {
 
 .split {
   display: grid;
-  grid-template-columns: minmax(160px, 0.48fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(150px, 0.45fr) minmax(230px, 1fr);
   gap: 12px;
+}
+
+.pages-panel .split {
+  min-height: 520px;
+}
+
+.pages-panel .list,
+#page-body {
+  max-height: 560px;
 }
 
 .page-button {
@@ -280,8 +314,8 @@ pre {
       "review"
       "query"
       "act"
-      "pages"
-      "lint";
+      "lint"
+      "pages";
   }
 
   .workspace {
