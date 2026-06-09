@@ -33,4 +33,24 @@ describe("lintVault", () => {
     expect(issues.some((issue) => issue.code === "missing_sources")).toBe(true);
     expect(issues.some((issue) => issue.code === "broken_wiki_link")).toBe(true);
   });
+
+  test("reports unresolved wiki links as open concepts", async () => {
+    const root = await tempRoot();
+    await initVault({ root });
+    await mkdir(join(root, "wiki"), { recursive: true });
+    await writeFile(
+      join(root, "wiki", "alpha.md"),
+      "---\nsources:\n  - manual\n---\n\n# Alpha\n\nAlpha mentions [[Loose Concept]] explicitly.",
+      "utf8"
+    );
+
+    await reindexVault({ root });
+    const issues = await lintVault({ root });
+
+    expect(issues).toContainEqual({
+      code: "open_concept",
+      path: "alpha.md",
+      message: "alpha.md mentions open concept \"Loose Concept\"."
+    });
+  });
 });

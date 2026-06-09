@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, relative } from "node:path";
+import { rebuildGraph } from "./graph.js";
 import { resolveVaultPaths } from "./paths.js";
 import { NotvaState } from "./state.js";
 
@@ -22,10 +23,11 @@ export async function reindexVault(options: ReindexVaultOptions): Promise<number
         updatedAt: new Date().toISOString()
       });
     }
-    return files.length;
   } finally {
     state.close();
   }
+  await rebuildGraph({ root: options.root });
+  return files.length;
 }
 
 async function listMarkdownFiles(root: string): Promise<string[]> {

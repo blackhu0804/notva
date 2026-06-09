@@ -227,16 +227,59 @@ SQLite FTS5
 Markdown frontmatter
 wiki links
 source-page mappings
+local semantic baseline
+hybrid reranking metadata
 ```
 
 Later retrieval can add:
 
 ```text
-embedding search
-hybrid search
-reranking
+provider-backed embedding indexes
+learned or model-backed reranking
 query decomposition
 raw + wiki dual retrieval
+```
+
+## Graphify Reference Takeaways
+
+Reference project: `safishamsi/graphify` at commit `47042beb05d1f6dd2186c0c499ae2840ce604ead`.
+
+Graphify is useful to Notva because it treats a corpus as a persistent knowledge graph instead of a one-shot retrieval index. The parts worth borrowing are:
+
+```text
+detect -> extract -> build graph -> analyze -> report -> export
+```
+
+Notva should adapt this as:
+
+```text
+capture source -> extract facts and relations -> propose wiki updates -> apply reviewed changes -> index wiki -> export/query graph
+```
+
+Notva should borrow these ideas:
+
+```text
+persistent graph.json relation layer
+portable graph.html offline viewer
+confidence labels: EXTRACTED, INFERRED, AMBIGUOUS
+plain-language graph report with god nodes, surprising links, and suggested questions
+path/explain queries over concepts and pages
+content-hash cache for incremental extraction
+assistant install workflow that nudges agents to query Notva before reading raw files
+optional parser packs instead of forcing every file type into the core package
+```
+
+Notva should not copy Graphify wholesale. Graphify is graph-first and strong for project architecture and mixed corpora. Notva is wiki-first: the durable product is a reviewed Markdown knowledge base that a person can read, edit, and migrate. The graph layer should support the wiki, retrieval, and downstream agent actions instead of replacing the wiki.
+
+Future graph-oriented commands:
+
+```bash
+notva graph export
+notva graph html
+notva explain <page-or-concept>
+notva path <from> <to>
+notva report
+notva install --platform codex
 ```
 
 ## Lint And Maintenance
@@ -341,6 +384,8 @@ Phase 2: Better ingestion
 
 ```text
 web pages
+preserve raw URL HTML while proposing readable extracted text
+content hash deduplication that preserves review status
 PDF
 Markdown
 plain text
@@ -349,14 +394,19 @@ chat logs
 source normalization
 ```
 
-Phase 3: Retrieval upgrade
+Phase 3: Retrieval and graph upgrade
 
 ```text
-embeddings
-hybrid search
-reranking
+local hybrid search baseline
+provider-backed embeddings
+learned or model-backed reranking
 citation tracing
 query-to-wiki proposals
+graph relation records
+graph.json export
+notva explain
+notva path
+knowledge graph report
 ```
 
 Phase 4: Web App
@@ -381,6 +431,8 @@ planning workflows
 summarization workflows
 coding workflows
 wiki proposal generation
+agent install instructions
+query-first hooks where supported
 ```
 
 Phase 6: Ecosystem
@@ -399,7 +451,7 @@ community examples
 
 Knowledge quality can degrade if AI writes directly into the wiki. Mitigation: proposal-first review flow.
 
-Retrieval can become unreliable as the vault grows. Mitigation: start with FTS, then add hybrid retrieval and reranking.
+Retrieval can become unreliable as the vault grows. Mitigation: start with FTS plus local hybrid retrieval and reranking metadata, then add provider-backed embedding indexes and stronger rerankers.
 
 Parsing many file types can expand scope quickly. Mitigation: begin with Markdown, text, and URLs, then add PDFs and richer formats later.
 

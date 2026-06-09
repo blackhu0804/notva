@@ -1,5 +1,18 @@
 import { DatabaseSync } from "node:sqlite";
-import type { PageRecord, ProposalChange, ProposalRecord, QueryHit, SourceRecord } from "./types.js";
+import { shortId } from "./paths.js";
+import type {
+  ActRunDetail,
+  ActRunRecord,
+  GraphEdgeRecord,
+  GraphNodeRecord,
+  MaintenanceActionResult,
+  PageRecord,
+  ProposalChange,
+  ProposalRecord,
+  QueryHit,
+  SourceHit,
+  SourceRecord
+} from "./types.js";
 
 interface SourceRow {
   id: string;
@@ -26,6 +39,42 @@ interface PageRow {
   title: string;
   body: string;
   updated_at: string;
+}
+
+interface QueryHitRow {
+  path: string;
+  title: string;
+  snippet: string;
+}
+
+interface GraphNodeRow {
+  id: string;
+  label: string;
+  kind: GraphNodeRecord["kind"];
+  path: string | null;
+  source_id: string | null;
+}
+
+interface GraphEdgeRow {
+  source: string;
+  target: string;
+  relation: string;
+  confidence: GraphEdgeRecord["confidence"];
+  confidence_score: number | null;
+  evidence: string | null;
+  source_id: string | null;
+}
+
+interface ActRunRow {
+  id: string;
+  task: string;
+  status: ActRunRecord["status"];
+  summary: string;
+  output_path: string;
+  evidence_json: string;
+  source_hits_json: string;
+  action_results_json: string;
+  created_at: string;
 }
 
 export class NotvaState {
@@ -66,6 +115,42 @@ export class NotvaState {
       );
 
       CREATE VIRTUAL TABLE IF NOT EXISTS page_fts USING fts5(path, title, body);
+
+      CREATE TABLE IF NOT EXISTS graph_nodes (
+        id TEXT PRIMARY KEY,
+        label TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        path TEXT,
+        source_id TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS graph_edges (
+        id TEXT PRIMARY KEY,
+        source TEXT NOT NULL,
+        target TEXT NOT NULL,
+        relation TEXT NOT NULL,
+        confidence TEXT NOT NULL,
+        confidence_score REAL,
+        evidence TEXT,
+        source_id TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS graph_edges_source_idx ON graph_edges(source);
+      CREATE INDEX IF NOT EXISTS graph_edges_target_idx ON graph_edges(target);
+
+      CREATE TABLE IF NOT EXISTS act_runs (
+        id TEXT PRIMARY KEY,
+        task TEXT NOT NULL,
+        status TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        output_path TEXT NOT NULL,
+        evidence_json TEXT NOT NULL,
+        source_hits_json TEXT NOT NULL,
+        action_results_json TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS act_runs_created_at_idx ON act_runs(created_at);
     `);
   }
 
@@ -114,8 +199,18 @@ export class NotvaState {
       .map(mapProposal);
   }
 
+  listProposalsForSource(sourceId: string): ProposalRecord[] {
+    return (this.db.prepare("SELECT * FROM proposals WHERE source_id = ? ORDER BY created_at ASC").all(sourceId) as unknown as ProposalRow[])
+      .map(mapProposal);
+  }
+
   markProposalStatus(id: string, status: ProposalRecord["status"], updatedAt: string): void {
     this.db.prepare("UPDATE proposals SET status = ?, updated_at = ? WHERE id = ?").run(status, updatedAt, id);
+  }
+
+  updateProposalChanges(id: string, changes: ProposalChange[], updatedAt: string): void {
+    this.db.prepare("UPDATE proposals SET changes_json = ?, updated_at = ? WHERE id = ?")
+      .run(JSON.stringify(changes), updatedAt, id);
   }
 
   upsertPage(page: PageRecord): void {
@@ -141,12 +236,22 @@ export class NotvaState {
     const hits: QueryHit[] = [];
     if (match) {
       try {
-        hits.push(...this.db.prepare(`
+        const rows = this.db.prepare(`
           SELECT path, title, snippet(page_fts, 2, '[', ']', '...', 16) AS snippet
           FROM page_fts
           WHERE page_fts MATCH ?
           LIMIT ?
-        `).all(match, limit) as unknown as QueryHit[]);
+        `).all(match, limit) as unknown as QueryHitRow[];
+        hits.push(...rows.map((row) => ({
+          ...row,
+          sources: [],
+          retrieval: {
+            method: "lexical" as const,
+            lexicalScore: 1,
+            vectorScore: 0,
+            rerankScore: 1
+          }
+        })));
       } catch {
         // FTS5 tokenization is not enough for all languages; fallback search below keeps Unicode content searchable.
       }
@@ -157,6 +262,110 @@ export class NotvaState {
     const seen = new Set(hits.map((hit) => hit.path));
     const fallback = fallbackSearch(query, this.listPages(), limit - hits.length, seen);
     return [...hits, ...fallback];
+  }
+
+  upsertGraphNode(node: GraphNodeRecord): void {
+    this.db.prepare(`
+      INSERT INTO graph_nodes (id, label, kind, path, source_id)
+      VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        label = excluded.label,
+        kind = excluded.kind,
+        path = excluded.path,
+        source_id = excluded.source_id
+    `).run(node.id, node.label, node.kind, node.path ?? null, node.sourceId ?? null);
+  }
+
+  upsertGraphEdge(edge: GraphEdgeRecord): void {
+    this.db.prepare(`
+      INSERT INTO graph_edges (id, source, target, relation, confidence, confidence_score, evidence, source_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        source = excluded.source,
+        target = excluded.target,
+        relation = excluded.relation,
+        confidence = excluded.confidence,
+        confidence_score = excluded.confidence_score,
+        evidence = excluded.evidence,
+        source_id = excluded.source_id
+    `).run(
+      graphEdgeId(edge),
+      edge.source,
+      edge.target,
+      edge.relation,
+      edge.confidence,
+      edge.confidenceScore ?? null,
+      edge.evidence ?? null,
+      edge.sourceId ?? null
+    );
+  }
+
+  clearGraph(): void {
+    this.db.exec(`
+      DELETE FROM graph_edges;
+      DELETE FROM graph_nodes;
+    `);
+  }
+
+  replaceGraph(nodes: GraphNodeRecord[], edges: GraphEdgeRecord[]): void {
+    this.clearGraph();
+    for (const node of nodes) this.upsertGraphNode(node);
+    for (const edge of edges) this.upsertGraphEdge(edge);
+  }
+
+  listGraphNodes(): GraphNodeRecord[] {
+    return (this.db.prepare(`
+      SELECT * FROM graph_nodes
+      ORDER BY id ASC
+    `).all() as unknown as GraphNodeRow[]).map(mapGraphNode);
+  }
+
+  listGraphEdges(): GraphEdgeRecord[] {
+    return (this.db.prepare(`
+      SELECT source, target, relation, confidence, confidence_score, evidence, source_id
+      FROM graph_edges
+      ORDER BY source ASC, target ASC, relation ASC, evidence ASC
+    `).all() as unknown as GraphEdgeRow[]).map(mapGraphEdge);
+  }
+
+  insertActRun(run: ActRunDetail): void {
+    this.db.prepare(`
+      INSERT OR REPLACE INTO act_runs (
+        id,
+        task,
+        status,
+        summary,
+        output_path,
+        evidence_json,
+        source_hits_json,
+        action_results_json,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      run.id,
+      run.task,
+      run.status,
+      run.summary,
+      run.outputPath,
+      JSON.stringify(run.evidence),
+      JSON.stringify(run.sourceHits),
+      JSON.stringify(run.actionResults),
+      run.createdAt
+    );
+  }
+
+  listActRuns(): ActRunRecord[] {
+    return (this.db.prepare(`
+      SELECT *
+      FROM act_runs
+      ORDER BY created_at DESC, id DESC
+    `).all() as unknown as ActRunRow[]).map(mapActRun);
+  }
+
+  getActRun(id: string): Omit<ActRunDetail, "output"> | undefined {
+    const row = this.db.prepare("SELECT * FROM act_runs WHERE id = ?").get(id) as ActRunRow | undefined;
+    return row ? mapActRunDetail(row) : undefined;
   }
 }
 
@@ -193,6 +402,70 @@ function mapPage(row: PageRow): PageRecord {
   };
 }
 
+function mapGraphNode(row: GraphNodeRow): GraphNodeRecord {
+  return withoutUndefined({
+    id: row.id,
+    label: row.label,
+    kind: row.kind,
+    path: row.path ?? undefined,
+    sourceId: row.source_id ?? undefined
+  });
+}
+
+function mapGraphEdge(row: GraphEdgeRow): GraphEdgeRecord {
+  return withoutUndefined({
+    source: row.source,
+    target: row.target,
+    relation: row.relation,
+    confidence: row.confidence,
+    confidenceScore: row.confidence_score ?? undefined,
+    evidence: row.evidence ?? undefined,
+    sourceId: row.source_id ?? undefined
+  });
+}
+
+function mapActRun(row: ActRunRow): ActRunRecord {
+  const evidence = JSON.parse(row.evidence_json) as QueryHit[];
+  const sourceHits = JSON.parse(row.source_hits_json) as SourceHit[];
+  const actionResults = JSON.parse(row.action_results_json) as MaintenanceActionResult[];
+  return {
+    id: row.id,
+    task: row.task,
+    status: row.status,
+    summary: row.summary,
+    outputPath: row.output_path,
+    evidenceCount: evidence.length,
+    sourceHitCount: sourceHits.length,
+    actionCount: actionResults.length,
+    createdAt: row.created_at
+  };
+}
+
+function mapActRunDetail(row: ActRunRow): Omit<ActRunDetail, "output"> {
+  return {
+    ...mapActRun(row),
+    evidence: JSON.parse(row.evidence_json) as QueryHit[],
+    sourceHits: JSON.parse(row.source_hits_json) as SourceHit[],
+    actionResults: JSON.parse(row.action_results_json) as MaintenanceActionResult[]
+  };
+}
+
+function withoutUndefined<T extends Record<string, unknown>>(record: T): T {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined)) as T;
+}
+
+function graphEdgeId(edge: GraphEdgeRecord): string {
+  return shortId([
+    edge.source,
+    edge.target,
+    edge.relation,
+    edge.confidence,
+    edge.confidenceScore ?? "",
+    edge.evidence ?? "",
+    edge.sourceId ?? ""
+  ].join("\0"));
+}
+
 function toFtsQuery(query: string): string {
   return unicodeTokens(query)
     .slice(0, 8)
@@ -217,7 +490,14 @@ function fallbackSearch(query: string, pages: PageRecord[], limit: number, seen:
     .map(({ page, matchedTerms }) => ({
       path: page.path,
       title: page.title,
-      snippet: snippetFor(page.body, matchedTerms[0])
+      snippet: snippetFor(page.body, matchedTerms[0]),
+      sources: [],
+      retrieval: {
+        method: "lexical" as const,
+        lexicalScore: matchedTerms.length,
+        vectorScore: 0,
+        rerankScore: matchedTerms.length
+      }
     }));
 }
 

@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { mkdir, stat } from "node:fs/promises";
+import { homedir } from "node:os";
 import { basename, join } from "node:path";
 import type { VaultPaths } from "./types.js";
+
+export function defaultVaultRoot(): string {
+  return process.env.NOTVA_VAULT ?? join(process.env.NOTVA_HOME ?? homedir(), "Notva");
+}
 
 export function resolveVaultPaths(root: string): VaultPaths {
   const notva = join(root, ".notva");

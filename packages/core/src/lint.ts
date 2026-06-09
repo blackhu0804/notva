@@ -24,6 +24,7 @@ export async function lintVault(options: LintVaultOptions): Promise<LintIssue[]>
         const normalized = link.toLowerCase();
         if (!pageTitles.has(normalized) && !pageSlugs.has(normalized.replace(/\s+/g, "-"))) {
           issues.push({ code: "broken_wiki_link", path: page.path, message: `${page.path} links to missing page "${link}".` });
+          issues.push({ code: "open_concept", path: page.path, message: `${page.path} mentions open concept "${link}".` });
         }
       }
     }

@@ -2,11 +2,12 @@
   "name": "notva",
   "version": "0.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "tsc -b packages/core packages/server packages/cli",
+    "build": "tsc -b packages/providers packages/core packages/server packages/cli",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc -b packages/core packages/server packages/cli",
+    "typecheck": "tsc -b packages/providers packages/core packages/server packages/cli",
     "notva": "tsx packages/cli/src/main.ts"
   },
   "devDependencies": {
